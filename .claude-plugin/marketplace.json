@@ -1,0 +1,14 @@
+{
+  "name": "ip",
+  "description": "ShotaIuchi's personal plugins for Claude Code and Codex",
+  "owner": {
+    "name": "ShotaIuchi"
+  },
+  "plugins": [
+    {
+      "name": "review-kit",
+      "source": "./plugins/review-kit",
+      "description": "Review skills"
+    }
+  ]
+}
