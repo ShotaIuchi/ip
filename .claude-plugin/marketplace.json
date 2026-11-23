@@ -19,6 +19,11 @@
       "name": "review",
       "source": "./plugins/review",
       "description": "Review code and PRs, then triage and fix findings"
+    },
+    {
+      "name": "dev",
+      "source": "./plugins/dev",
+      "description": "Pin down a spec with you, then build it with a review-and-fix loop"
     }
   ]
 }

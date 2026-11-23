@@ -7,7 +7,7 @@ description: >
   「レビューして」「コードレビュー」「設計レビュー」「品質チェック」「セキュリティチェック」
   「パフォーマンスレビュー」「変更を確認して」等で起動する。
   結果はチャットに出すだけで、PRへの投稿はしない（PRに投稿するなら review-pr を使う）。
-argument-hint: <ファイルパス | staged | diff | branch BASE..HEAD | pr NUMBER | 説明>
+argument-hint: "<ファイルパス | staged | diff | branch BASE..HEAD | since REF | pr NUMBER | 説明>"
 ---
 
 # review: 多観点レビュー
@@ -66,6 +66,7 @@ argument-hint: <ファイルパス | staged | diff | branch BASE..HEAD | pr NUMB
 | `staged` | `git diff --cached` |
 | `diff` | `git diff`（未ステージ） |
 | `branch BASE..HEAD` | `git diff BASE..HEAD` と `git log --format='%s%n%b' BASE..HEAD` |
+| `since <ref>` | `git diff <ref>`（`<ref>` から作業ツリーまで。コミット済みと未コミットの両方。未追跡のファイルは `git add -N` したものだけが入る） |
 | `pr 123` / `#123` | `gh pr view 123 --json title,body` と `gh pr diff 123`。リンクされた Issue があれば読む |
 | 空 | `git diff --cached` → 空なら `git diff` → 空ならブランチの差分（ベースブランチとの比較） |
 | 説明（「認証フローをレビューして」等） | 関連ファイルを検索して読む。一致が不確かならユーザーに確認してから進める |
@@ -91,6 +92,7 @@ argument-hint: <ファイルパス | staged | diff | branch BASE..HEAD | pr NUMB
 |---|---|
 | `staged` / `diff` / 空 | 指定なし（現在の差分） |
 | `branch BASE..HEAD` | そのブランチ |
+| `since <ref>` | `<ref>` が `HEAD` なら指定なし（現在の差分）。それ以外はそのブランチ |
 | `pr 123` | PR 番号 |
 | ファイルパス | そのパス |
 
@@ -113,6 +115,7 @@ argument-hint: <ファイルパス | staged | diff | branch BASE..HEAD | pr NUMB
 |---|---|
 | `staged` / `diff` / 空 | コミットしていない変更 |
 | `branch BASE..HEAD` | ベースブランチ `BASE` との差分 |
+| `since <ref>` | `<ref>` が `HEAD` ならコミットしていない変更。それ以外は `git diff <ref>` の差分（独自のレビュー指示として渡す） |
 | `pr 123` | `gh pr diff 123` の差分（独自のレビュー指示として渡す） |
 | ファイルパス | そのファイル（独自のレビュー指示として渡す） |
 
