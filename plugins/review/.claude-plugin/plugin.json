@@ -1,6 +1,6 @@
 {
   "name": "review",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Review code and PRs, then triage and fix findings",
   "author": { "name": "ShotaIuchi" }
 }
