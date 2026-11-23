@@ -1,0 +1,7 @@
+{
+  "name": "design",
+  "version": "0.1.0",
+  "description": "Design a whole service with you and keep the design docs (glossary, requirements, design, decisions) in one convention",
+  "author": { "name": "ShotaIuchi" },
+  "skills": "./skills/"
+}

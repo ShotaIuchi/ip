@@ -39,6 +39,8 @@ argument-hint: "<やりたいこと | 仕様のメモ・ファイル | Issue の
 
 - 関係するファイル、似た既存機能、使われている設計の慣習
 - 守るべきルール（`AGENTS.md`、`CLAUDE.md`、`CONTRIBUTING.md` など）
+- 設計の文書（`docs/README.md` があれば読み、そこから関係する要求仕様・基本設計・判断記録を読む）。
+  用語集（`docs/glossary.md` など）があれば、仕様書の言葉はその定義どおりに使う。設計の文書と食い違う仕様にしない
 - **チェックのコマンド** — テスト・ビルド・lint・型チェックの実行方法
   （`package.json` の scripts、`Makefile`、`justfile`、CI の設定、README など）。完了の条件に使う
 - 仕様書の置き場所の慣習 — 既に `docs/specs/`、`docs/design/`、`specs/` などがあればそれに合わせる

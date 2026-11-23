@@ -24,6 +24,11 @@
       "name": "dev",
       "source": "./plugins/dev",
       "description": "Pin down a spec with you, then build it with a review-and-fix loop"
+    },
+    {
+      "name": "design",
+      "source": "./plugins/design",
+      "description": "Design a whole service with you and keep the design docs (glossary, requirements, design, decisions) in one convention"
     }
   ]
 }

@@ -6,9 +6,11 @@ Personal plugin marketplace for Claude Code and Codex (also works with GitHub Co
 
 | Plugin | Version | Skill | Description |
 |---|---|---|---|
-| [dev](plugins/dev) | 0.2.2 | `decompose` | Break a GitHub issue / JIRA ticket into ~1-PR subtasks and create them (GitHub sub-issues + blocked-by) after you approve |
+| [dev](plugins/dev) | 0.2.3 | `decompose` | Break a GitHub issue / JIRA ticket into ~1-PR subtasks and create them (GitHub sub-issues + blocked-by) after you approve |
 | | | `spec` | Pin down what to build with you and write an approved `SPEC.md` |
 | | | `build` | Build from the spec in fresh-context subagents, then check / match the spec / review / fix until clean (max 3 rounds). Asks only when it would deviate from the spec |
+| [design](plugins/design) | 0.1.0 | `service` | Design a whole service with you and write the design docs (glossary / concept / requirements / design / roadmap / decisions). Keeps each repo's writing rules in sync with the plugin |
+| | | `decision` | Record one design decision as an ADR (MADR style) in `docs/decisions/` |
 | [git-kit](plugins/git-kit) | 0.1.1 | `commit` | Split changes into meaningful commits after confirming the plan |
 | [read](plugins/read) | 0.1.0 | `diagram` | One-page design view: 4 Mermaid diagrams + where to look |
 | | | `outline` | Skimming view: signatures, control flow and side effects only |
@@ -22,6 +24,7 @@ or type `$` and pick `<plugin>:<skill>` in Codex.
 
 `review:triage-pr` commits through `git-kit:commit` when it is installed.
 `dev:build` reviews through `review:review` when it is installed.
+`design:service` → `dev:decompose` → `dev:spec` → `dev:build` covers a service from design to code.
 
 ## Install
 
@@ -29,6 +32,7 @@ or type `$` and pick `<plugin>:<skill>` in Codex.
 
 ```
 /plugin marketplace add ShotaIuchi/ip
+/plugin install design@ip
 /plugin install dev@ip
 /plugin install git-kit@ip
 /plugin install read@ip
@@ -39,6 +43,7 @@ or type `$` and pick `<plugin>:<skill>` in Codex.
 
 ```
 codex plugin marketplace add ShotaIuchi/ip
+codex plugin add design@ip
 codex plugin add dev@ip
 codex plugin add git-kit@ip
 codex plugin add read@ip
@@ -51,6 +56,7 @@ Copilot CLI reads `.claude-plugin/` directly, so no extra manifests are needed.
 
 ```
 copilot plugin marketplace add ShotaIuchi/ip
+copilot plugin install design@ip
 copilot plugin install dev@ip
 copilot plugin install git-kit@ip
 copilot plugin install read@ip
