@@ -1,6 +1,6 @@
 {
   "name": "dev",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Pin down a spec with you, then build it with a review-and-fix loop",
   "author": { "name": "ShotaIuchi" }
 }

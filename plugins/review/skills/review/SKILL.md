@@ -93,7 +93,7 @@ argument-hint: "<ファイルパス | staged | diff | branch BASE..HEAD | since 
 | `staged` / `diff` / 空 | 指定なし（現在の差分） |
 | `branch BASE..HEAD` | そのブランチ |
 | `since <ref>` | `<ref>` が `HEAD` なら指定なし（現在の差分）。それ以外はそのブランチ |
-| `pr 123` | PR 番号 |
+| `pr 123` | PR の URL（番号だけだと、作業ディレクトリが対象のリポジトリでない時に失敗する） |
 | ファイルパス | そのパス |
 
 深さは `medium` を渡す。ユーザーが `low`〜`high` を指定していればそれを渡す。
