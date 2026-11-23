@@ -6,7 +6,8 @@ Personal plugin marketplace for Claude Code and Codex.
 
 | Plugin | Version | Skill | Description |
 |---|---|---|---|
-| [dev](plugins/dev) | 0.1.0 | `spec` | Pin down what to build with you and write an approved `SPEC.md` |
+| [dev](plugins/dev) | 0.2.0 | `decompose` | Break a GitHub issue / JIRA ticket into ~1-PR subtasks and create them (GitHub sub-issues + blocked-by) after you approve |
+| | | `spec` | Pin down what to build with you and write an approved `SPEC.md` |
 | | | `build` | Build from the spec in fresh-context subagents, then check / match the spec / review / fix until clean (max 3 rounds). Asks only when it would deviate from the spec |
 | [git-kit](plugins/git-kit) | 0.1.1 | `commit` | Split changes into meaningful commits after confirming the plan |
 | [read](plugins/read) | 0.1.0 | `diagram` | One-page design view: 4 Mermaid diagrams + where to look |
