@@ -9,6 +9,7 @@ Personal plugin marketplace for Claude Code and Codex.
 ```
 /plugin marketplace add ShotaIuchi/ip
 /plugin install review-kit@ip
+/plugin install git-kit@ip
 ```
 
 ### Codex
@@ -16,6 +17,7 @@ Personal plugin marketplace for Claude Code and Codex.
 ```
 codex plugin marketplace add ShotaIuchi/ip
 codex plugin add review-kit@ip
+codex plugin add git-kit@ip
 ```
 
 ## Layout
