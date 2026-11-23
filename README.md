@@ -2,6 +2,16 @@
 
 Personal plugin marketplace for Claude Code and Codex.
 
+## Plugins
+
+| Plugin | Version | Skills | Description |
+|---|---|---|---|
+| [git-kit](plugins/git-kit) | 0.1.1 | `commit` | Split changes into meaningful commits after confirming the plan |
+| [review-kit](plugins/review-kit) | 0.1.0 | `hello` (sample) | Review skills (placeholder) |
+
+Invoke a skill as `/<plugin>:<skill>` in Claude Code (e.g. `/git-kit:commit`),
+or type `$` and pick `<plugin>:<skill>` in Codex.
+
 ## Install
 
 ### Claude Code
@@ -38,3 +48,4 @@ plugins/<plugin>/
      or `{"source": "git-subdir", "url": "...", "path": "..."}`.
      Avoid `"source": "github"` (not supported by Codex).
 3. Bump `version` in both manifests so installed copies update.
+4. Update the Plugins table above.
