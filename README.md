@@ -4,13 +4,20 @@ Personal plugin marketplace for Claude Code and Codex.
 
 ## Plugins
 
-| Plugin | Version | Skills | Description |
+| Plugin | Version | Skill | Description |
 |---|---|---|---|
 | [git-kit](plugins/git-kit) | 0.1.1 | `commit` | Split changes into meaningful commits after confirming the plan |
-| [review-kit](plugins/review-kit) | 0.1.0 | `hello` (sample) | Review skills (placeholder) |
+| [read](plugins/read) | 0.1.0 | `diagram` | One-page design view: 4 Mermaid diagrams + where to look |
+| | | `outline` | Skimming view: signatures, control flow and side effects only |
+| [review](plugins/review) | 0.1.0 | `review` | Multi-perspective review, report in chat (Must / Should / Could) |
+| | | `review-pr` | Review a PR and post inline comments; re-review on later runs; `--approve` |
+| | | `triage` | Investigate review findings, then fix the ones you pick |
+| | | `triage-pr` | Fix PR review comments, commit, push and reply with the fixing commit |
 
-Invoke a skill as `/<plugin>:<skill>` in Claude Code (e.g. `/git-kit:commit`),
+Invoke a skill as `/<plugin>:<skill>` in Claude Code (e.g. `/review:review`),
 or type `$` and pick `<plugin>:<skill>` in Codex.
+
+`review:triage-pr` commits through `git-kit:commit` when it is installed.
 
 ## Install
 
@@ -18,16 +25,18 @@ or type `$` and pick `<plugin>:<skill>` in Codex.
 
 ```
 /plugin marketplace add ShotaIuchi/ip
-/plugin install review-kit@ip
 /plugin install git-kit@ip
+/plugin install read@ip
+/plugin install review@ip
 ```
 
 ### Codex
 
 ```
 codex plugin marketplace add ShotaIuchi/ip
-codex plugin add review-kit@ip
 codex plugin add git-kit@ip
+codex plugin add read@ip
+codex plugin add review@ip
 ```
 
 ## Layout

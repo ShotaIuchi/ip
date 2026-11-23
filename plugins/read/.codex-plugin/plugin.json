@@ -1,7 +1,7 @@
 {
-  "name": "review-kit",
+  "name": "read",
   "version": "0.1.0",
-  "description": "Review skills",
+  "description": "Understand code: diagrams and skimming outlines",
   "author": { "name": "ShotaIuchi" },
   "skills": "./skills/"
 }

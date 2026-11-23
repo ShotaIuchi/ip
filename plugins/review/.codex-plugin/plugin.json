@@ -1,0 +1,7 @@
+{
+  "name": "review",
+  "version": "0.1.0",
+  "description": "Review code and PRs, then triage and fix findings",
+  "author": { "name": "ShotaIuchi" },
+  "skills": "./skills/"
+}
