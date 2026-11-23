@@ -1,0 +1,11 @@
+{
+  "description": "Inject the rules in rules/*.md into every session and subagent",
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/inject.py\" SessionStart" } ] }
+    ],
+    "SubagentStart": [
+      { "hooks": [ { "type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/inject.py\" SubagentStart" } ] }
+    ]
+  }
+}

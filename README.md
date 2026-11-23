@@ -14,6 +14,7 @@ Personal plugin marketplace for Claude Code and Codex (also works with GitHub Co
 | [git-kit](plugins/git-kit) | 0.1.1 | `commit` | Split changes into meaningful commits after confirming the plan |
 | [read](plugins/read) | 0.1.0 | `diagram` | One-page design view: 4 Mermaid diagrams + where to look |
 | | | `outline` | Skimming view: signatures, control flow and side effects only |
+| [rules](plugins/rules) | 0.1.0 | — (hooks) | Always-on working rules (`rules/*.md`) injected at session and subagent start: answer-only for questions, verify before concluding, no effort-driven compromises. In Codex, trust the hooks once with `/hooks` |
 | [review](plugins/review) | 0.3.3 | `review` | Multi-perspective review, report in chat (Must / Should / Could). Delegates correctness to the built-in reviewer (`/code-review` in Claude Code, `$review-agent` in Codex, the `code-review` agent in Copilot CLI) |
 | | | `review-pr` | Review a PR and post inline comments; re-review on later runs; `--approve` |
 | | | `triage` | Investigate review findings, then fix the ones you pick |
@@ -37,6 +38,7 @@ or type `$` and pick `<plugin>:<skill>` in Codex.
 /plugin install git-kit@ip
 /plugin install read@ip
 /plugin install review@ip
+/plugin install rules@ip
 ```
 
 ### Codex
@@ -48,6 +50,7 @@ codex plugin add dev@ip
 codex plugin add git-kit@ip
 codex plugin add read@ip
 codex plugin add review@ip
+codex plugin add rules@ip   # then run /hooks once to trust its hooks
 ```
 
 ### GitHub Copilot CLI

@@ -29,6 +29,11 @@
       "name": "design",
       "source": "./plugins/design",
       "description": "Design a whole service with you and keep the design docs (glossary, requirements, design, decisions) in one convention"
+    },
+    {
+      "name": "rules",
+      "source": "./plugins/rules",
+      "description": "Always-on working rules injected into every session and subagent"
     }
   ]
 }
