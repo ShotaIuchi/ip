@@ -23,7 +23,8 @@ argument-hint: "<ファイルパス | staged | diff | branch BASE..HEAD | since 
 |---|---|
 | Claude Code | `code-review` スキル（標準） |
 | Codex | `review-agent` システムスキル（標準。`$review-agent`） |
-| どちらも使えない環境 | 任せず、正確性も自前の観点として回す |
+| GitHub Copilot CLI | `code-review` サブエージェント（標準。`task` ツールの agent_type `code-review`） |
+| どれも使えない環境 | 任せず、正確性も自前の観点として回す |
 
 ## 重要度ガイド（正規定義）
 
@@ -92,9 +93,12 @@ argument-hint: "<ファイルパス | staged | diff | branch BASE..HEAD | since 
 |---|---|
 | `staged` / `diff` / 空 | 指定なし（現在の差分） |
 | `branch BASE..HEAD` | そのブランチ |
-| `since <ref>` | `<ref>` が `HEAD` なら指定なし（現在の差分）。それ以外はそのブランチ |
+| `since <ref>` | `<ref>` が今の HEAD と同じコミット（`git rev-parse <ref>` と `git rev-parse HEAD` が一致）なら指定なし（現在の差分）。違えば、そのブランチと、未コミットの変更があれば指定なしの2回。どちらも `git diff <ref>` で変わった行にかかる指摘だけを採用する |
 | `pr 123` | PR の URL（番号だけだと、作業ディレクトリが対象のリポジトリでない時に失敗する） |
 | ファイルパス | そのパス |
+
+`code-review` は別の文脈で動き、作業ディレクトリを引き継がないことがある。今いるディレクトリが対象のリポジトリでない場合や、
+指摘が0件で「git リポジトリではない」などと返った場合は、リポジトリのパスを明示して呼び直す。
 
 深さは `medium` を渡す。ユーザーが `low`〜`high` を指定していればそれを渡す。
 `max` と `ultra` は高くつくので、ユーザーが明示した場合だけ渡す。
@@ -115,7 +119,7 @@ argument-hint: "<ファイルパス | staged | diff | branch BASE..HEAD | since 
 |---|---|
 | `staged` / `diff` / 空 | コミットしていない変更 |
 | `branch BASE..HEAD` | ベースブランチ `BASE` との差分 |
-| `since <ref>` | `<ref>` が `HEAD` ならコミットしていない変更。それ以外は `git diff <ref>` の差分（独自のレビュー指示として渡す） |
+| `since <ref>` | `<ref>` が今の HEAD と同じコミットならコミットしていない変更。それ以外は `git diff <ref>` の差分（独自のレビュー指示として渡す） |
 | `pr 123` | `gh pr diff 123` の差分（独自のレビュー指示として渡す） |
 | ファイルパス | そのファイル（独自のレビュー指示として渡す） |
 
@@ -128,7 +132,12 @@ argument-hint: "<ファイルパス | staged | diff | branch BASE..HEAD | since 
 
 `review-agent` は変更前からある問題を出さないので、「既存の問題（参考）」は空になる。
 
-**どちらも使えない、または呼び出しに失敗した場合** は、正確性も下の手順で自前の観点として回し、レポートにその旨を書く。
+**GitHub Copilot CLI: `code-review` サブエージェント**
+
+`task` ツールで agent_type に `code-review` を指定して起動し、対象の差分（上の表の `git diff` などで取ったもの）と、
+リポジトリのパスを渡す。返ってきた指摘には、このスキルの重要度ガイドに従って Must / Should / Could を付け直す。
+
+**どれも使えない、または呼び出しに失敗した場合** は、正確性も下の手順で自前の観点として回し、レポートにその旨を書く。
 
 #### 自前の観点
 
@@ -183,7 +192,7 @@ argument-hint: "<ファイルパス | staged | diff | branch BASE..HEAD | since 
 # レビューレポート
 
 **対象**: <対象>
-**観点**: <使った観点>（正確性: code-review に委譲 | review-agent に委譲 | 自前 ／ 最新動向: 実施 | Web検索不可のため省略 | 対象外）
+**観点**: <使った観点>（正確性: code-review に委譲 | review-agent に委譲 | Copilot の code-review に委譲 | 自前 ／ 最新動向: 実施 | Web検索不可のため省略 | 対象外）
 
 | 重要度 | 件数 |
 |---|---|

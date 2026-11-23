@@ -141,5 +141,5 @@ argument-hint: "<やりたいこと | 仕様のメモ・ファイル | Issue の
 このまま build で実装まで進めますか？
 ```
 
-進める場合は `build` スキルを仕様書のパスを付けて呼ぶ（Claude Code: `/dev:build <パス>`、Codex: `$dev:build <パス>`）。
+進める場合は `build` スキルを仕様書のパスを付けて呼ぶ（Claude Code と GitHub Copilot CLI: `/dev:build <パス>`、Codex: `$dev:build <パス>`）。
 後で進める場合は、そのコマンドを伝えて終わる。

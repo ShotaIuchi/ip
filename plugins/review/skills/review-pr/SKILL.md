@@ -71,10 +71,11 @@ PRの差分（`gh pr diff <number>`）を、PRのタイトル・本文・リン�
    最新動向（Web検索が使える場合のみ）。無関係な観点は使わない。
    正確性は、実行環境の標準レビュー機能に任せる。Claude Code なら `code-review` スキルに PR の URL を渡す（番号だけだと、作業ディレクトリが対象のリポジトリでない時に失敗する）
    （`--comment` は渡さない。投稿はこのスキルがまとめて行う）。Codex なら `$review-agent` に
-   `gh pr diff` の差分（再レビューでは前回のコミットからの差分）のレビューを任せる。
+   `gh pr diff` の差分（再レビューでは前回のコミットからの差分）のレビューを任せる。GitHub Copilot CLI なら
+   `task` ツールで agent_type `code-review` のサブエージェントに同じ差分を渡し、返った指摘に重要度を付け直す。
    重要度の読み替えは `review` スキルと同じ（code-review: important → Should、致命的なら Must ／ nit → Could ／
    pre_existing → まとめコメントに参考として1行。review-agent: P0 → Must ／ P1 → Must か Should ／ P2 → Should ／ P3 → Could）。
-   どちらも使えなければ、正確性も自前で回す。
+   どれも使えなければ、正確性も自前で回す。
 2. サブエージェントを起動できる環境では観点ごとに並列に、できなければ1観点ずつ順にレビューする。
    各観点には差分（対象）と変更ファイル全体（参照用の文脈）を区別して渡し、
    `{severity, title, location(path:line), detail, recommendation}` の形で指摘を返させる。
