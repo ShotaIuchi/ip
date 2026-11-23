@@ -9,7 +9,7 @@ Personal plugin marketplace for Claude Code and Codex.
 | [git-kit](plugins/git-kit) | 0.1.1 | `commit` | Split changes into meaningful commits after confirming the plan |
 | [read](plugins/read) | 0.1.0 | `diagram` | One-page design view: 4 Mermaid diagrams + where to look |
 | | | `outline` | Skimming view: signatures, control flow and side effects only |
-| [review](plugins/review) | 0.1.0 | `review` | Multi-perspective review, report in chat (Must / Should / Could) |
+| [review](plugins/review) | 0.2.0 | `review` | Multi-perspective review, report in chat (Must / Should / Could) |
 | | | `review-pr` | Review a PR and post inline comments; re-review on later runs; `--approve` |
 | | | `triage` | Investigate review findings, then fix the ones you pick |
 | | | `triage-pr` | Fix PR review comments, commit, push and reply with the fixing commit |
