@@ -14,7 +14,7 @@ Claude Code と Codex 向けの個人用プラグインマーケットプレイ�
 | [git-kit](plugins/git-kit) | 0.1.1 | `commit` | 変更を意味ごとのコミットに分け、分け方を確認してからコミットする |
 | [read](plugins/read) | 0.1.0 | `diagram` | 1ページの設計資料（Mermaid の図4枚と、どこを見るかの表） |
 | | | `outline` | 流れだけを読むための骨組みビュー（シグネチャ・制御フロー・副作用だけを残す） |
-| [rules](plugins/rules) | 0.1.0 | —（hooks） | 常に守る作業ルール（`rules/*.md`）を、セッションとサブエージェントの開始時に差し込む。質問には回答だけを返す・断定の前に前提を確かめる・工数を理由に妥協しない。Codex では一度 `/hooks` でフックを信頼する |
+| [rules](plugins/rules) | 0.2.0 | —（hooks） | 常に守る作業ルール（`rules/*.md`）を、セッションとサブエージェントの開始時に差し込む。質問には回答だけを返す・断定の前に前提を確かめる・工数を理由に妥協しない・選択肢は推奨（工数度外視のベストプラクティス）を一番上に置く。Codex では一度 `/hooks` でフックを信頼する |
 | [review](plugins/review) | 0.3.3 | `review` | 複数の観点でレビューし、チャットに報告する（Must / Should / Could）。正確性のチェックは組み込みのレビュー機能に任せる（Claude Code は `/code-review`、Codex は `$review-agent`、Copilot CLI は `code-review` エージェント） |
 | | | `review-pr` | PR をレビューして該当行にコメントを投稿する。2回目以降は再レビューになる。`--approve` で承認まで進める |
 | | | `triage` | レビューの指摘を調べてから、選んだ指摘だけを直す |

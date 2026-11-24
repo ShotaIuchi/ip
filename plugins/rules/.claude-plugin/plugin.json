@@ -1,6 +1,6 @@
 {
   "name": "rules",
-  "version": "0.1.0",
-  "description": "Always-on working rules injected into every session and subagent (answer-only for questions, verify before concluding, no effort-driven compromises)",
+  "version": "0.2.0",
+  "description": "Always-on working rules injected into every session and subagent (answer-only for questions, verify before concluding, no effort-driven compromises, recommended option first)",
   "author": { "name": "ShotaIuchi" }
 }
