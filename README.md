@@ -98,6 +98,40 @@ copilot plugin install review@ip
 copilot plugin install rules@ip
 ```
 
+## 更新
+
+`main` に入った新しい版を、インストール済みのプラグインに反映します（プラグインの `version` が上がっているものだけが更新されます）。
+更新した後は、CLI を起動し直すと反映されます。
+
+### Claude Code
+
+マーケットプレイスを取り込み直してから、入れたプラグインごとに更新します（Claude Code の中では `/plugin` からも更新できます）。
+
+```
+claude plugin marketplace update ip
+claude plugin update design@ip
+claude plugin update dev@ip
+claude plugin update git-kit@ip
+claude plugin update read@ip
+claude plugin update review@ip
+claude plugin update rules@ip
+```
+
+### Codex
+
+マーケットプレイスを取り込み直すと、入れたプラグインも新しい版になります。確かめるには `codex plugin list | grep @ip` を実行します。
+
+```
+codex plugin marketplace upgrade ip
+```
+
+### GitHub Copilot CLI
+
+```
+copilot plugin marketplace update ip
+copilot plugin update --all
+```
+
 ## 構成
 
 ```
