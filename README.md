@@ -21,8 +21,8 @@ Claude Code と Codex 向けの個人用プラグインマーケットプレイ�
 | | | `triage` | レビューの指摘を調べてから、選んだ指摘だけを直す |
 | | | `loop` | 今の変更をレビューし、Must / Should の指摘とチェックの失敗を直すことを、直すものが無くなるまで（既定で最大3周、`--max-rounds`）繰り返す。仕様書は要らない。設計や公開 API を変える必要があるときだけ止まって聞く。コミットはしない |
 | | | `triage-pr` | PR のレビューコメントを直してコミット・push し、直したコミットを返信する |
-| [tracker](plugins/tracker) | 0.1.0 | `issue` | Jira（Atlassian MCP）・GitHub Issues（`gh`）のチケットを、言葉の頼み（「PROJ-12 をレビュー待ちにして」「自分の担当を出して」）どおりに、そのプロジェクトの運用で操作する。探す・見る・作る・子を作る・更新・状態を進める・コメント・依存を付ける・工数を記録する。書き込みは毎回確認を取ってから行い、ツールに無い操作は代えずに止まる |
-| | | `setup` | 運用ファイル `TRACKER.md` を、ツールから集めた情報（課題の種類・状態と遷移・必須項目・ラベル・テンプレート・直近の使われ方）で下書きし、分からない決まりを聞いて、確認を取ってから書く。既にあれば差分を見せて更新する |
+| [tracker](plugins/tracker) | 0.2.0 | `issue` | Jira（Atlassian MCP）・GitHub Issues（`gh`）のチケットを、言葉の頼み（「PROJ-12 をレビュー待ちにして」「自分の担当を出して」）どおりに、そのプロジェクトの運用で操作する。探す・見る・作る・子を作る・更新・状態を進める・コメント・依存を付ける・工数を記録する。書き込みは毎回確認を取ってから行い、ツールに無い操作は代えずに止まる。運用ファイルの取り込み元の版を確かめ、更新されていれば取り込み直すか聞く |
+| | | `setup` | 運用ファイル `TRACKER.md` を、ツールから集めた情報（課題の種類・状態と遷移・必須項目・ラベル・テンプレート・直近の使われ方）で下書きし、分からない決まりを聞いて、確認を取ってから書く。既にあれば差分を見せて更新する。`--from` で運用の決まりを書いた外の文書（Google Docs・Gist・GitHub のファイル・Confluence・`https` の URL）を取り込み元として決まった見出しに写し、取り込み直せる |
 
 スキルは、Claude Code と Copilot CLI では `/<plugin>:<skill>`（例: `/review:review`）で呼び出します。
 Codex では `$` を入力して `<plugin>:<skill>` を選びます。
@@ -41,7 +41,11 @@ Codex では `$` を入力して `<plugin>:<skill>` を選びます。
 プロジェクトの運用の違い（状態の流れ、課題の種類と必須項目、テンプレート、ラベル、工数）は、各プロジェクトの運用ファイルが受け持ちます。
 置き場所はリポジトリ直下の `TRACKER.md` で、無ければ個人の置き場所 `~/.config/ip-tracker/<host>/<owner>/<repo>.md` を読みます。
 書き方は `plugins/tracker/skills/setup/references/tracker-format.md` にあり、`/tracker:setup` で下書きできます。
-認証情報はファイルに書かず、Jira は Atlassian MCP の接続、GitHub は `gh` のログインを使います。
+運用の決まりが人向けの文書（Google Docs・Gist・GitHub のファイル・Confluence・`https` の URL）にあれば、`/tracker:setup --from <場所>` で
+決まった見出しに写して取り込めます。取り込み元は運用ファイルの `## 取り込み元` に版の印と一緒に記録され、
+`/tracker:issue` は呼ばれるたびに版の印だけを確かめて、元の文書が更新されていれば取り込み直すか聞きます。人は元の文書だけを直せば済みます。
+取り込み元ごとの読み方は `plugins/tracker/skills/setup/references/sources.md` にあります。
+認証情報はファイルに書かず、Jira・Confluence は Atlassian MCP の接続、GitHub・Gist は `gh` のログイン、Google Docs は Google Drive のコネクタを使います。
 
 ## 別の AI にもレビューさせる（`--with`）
 
@@ -172,8 +176,8 @@ python3 -m unittest discover -s tests -v
 リポジトリの整合性（マニフェストの JSON、2つのマニフェストと上の表のバージョン）と、
 `review:review` の SKILL.md にある別の AI のコマンドに、決めた権限のオプションと `IP_PEER=1` が入っていること、
 `git-kit:merge` の SKILL.md の frontmatter と長さ（指示の水準に留まっているか）、試しのマージのコマンド、コードブロックに push などの扱わないコマンドが無いことを確かめます。
-`tracker` は構造だけを確かめます（frontmatter と長さ、参照ファイルの動詞の見出し、運用ファイルの書き方の見出し、
-`dev:decompose` にツールごとの操作が無いこと、実在の値や認証情報を書かせる指示が無いこと）。
+`tracker` は構造だけを確かめます（frontmatter と長さ、参照ファイルの動詞の見出し、運用ファイルの書き方の見出しと取り込み元の表、
+取り込み元の種類ごとの節と版の印の種類、`dev:decompose` にツールごとの操作が無いこと、実在の値や認証情報を書かせる指示が無いこと）。
 
 ## プラグインの追加
 
