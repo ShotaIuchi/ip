@@ -120,7 +120,7 @@ class ManifestTest(unittest.TestCase):
             with self.subTest(kind=kind):
                 manifest = load(TRACKER / kind / "plugin.json")
                 self.assertEqual(manifest["name"], "tracker")
-                self.assertEqual(manifest["version"], "0.3.0")
+                self.assertEqual(manifest["version"], "0.3.1")
         sources = {e["name"]: e["source"] for e in load(ROOT / ".claude-plugin" / "marketplace.json")["plugins"]}
         self.assertEqual(sources.get("tracker"), "./plugins/tracker")
 
@@ -130,7 +130,7 @@ class ManifestTest(unittest.TestCase):
                 self.assertEqual(load(DEV / kind / "plugin.json")["version"], "0.4.0")
         readme = read(ROOT / "README.md")
         self.assertRegex(readme, r"(?m)^\| \[dev\]\(plugins/dev\) \| 0\.4\.0 \|")
-        self.assertRegex(readme, r"(?m)^\| \[tracker\]\(plugins/tracker\) \| 0\.3\.0 \|")
+        self.assertRegex(readme, r"(?m)^\| \[tracker\]\(plugins/tracker\) \| 0\.3\.1 \|")
         for line in ("/plugin install tracker@ip", "codex plugin add tracker@ip", "copilot plugin install tracker@ip",
                      "claude plugin update tracker@ip"):
             with self.subTest(line=line):
@@ -439,8 +439,10 @@ class ViewFormatTest(unittest.TestCase):
             if condition.split(" ", 1)[0] in ("ラベル", "担当"):  # several values: compared with `に含む`, not `=`
                 self.assertNotRegex(condition, r"^\S+ = ")
         if "取り直す間隔" in items:
-            self.assertRegex(items["取り直す間隔"], r"^\d+$")
-            self.assertGreaterEqual(int(items["取り直す間隔"]), 30)
+            interval = items["取り直す間隔"]
+            if interval != "なし":  # なし: refetch only on open and on the page's refresh button
+                self.assertRegex(interval, r"^\d+$")
+                self.assertGreaterEqual(int(interval), 30)
 
     def test_comparators(self):  # view AC-3: the comparators the condition check uses
         self.assertEqual(set(comparators()), {"=", "!=", "に含む", ">=", "<="})
