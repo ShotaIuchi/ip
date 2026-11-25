@@ -34,6 +34,11 @@
       "name": "rules",
       "source": "./plugins/rules",
       "description": "Always-on working rules injected into every session and subagent"
+    },
+    {
+      "name": "tracker",
+      "source": "./plugins/tracker",
+      "description": "Operate Jira and GitHub Issues the way each project runs them, from plain requests"
     }
   ]
 }

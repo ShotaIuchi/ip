@@ -6,7 +6,7 @@ Claude Code と Codex 向けの個人用プラグインマーケットプレイ�
 
 | プラグイン | バージョン | スキル | 説明 |
 |---|---|---|---|
-| [dev](plugins/dev) | 0.3.0 | `decompose` | GitHub の Issue や JIRA の課題を、1PR 程度のサブタスクに分け、承認を得てから作成する（GitHub ではサブ issue と blocked-by の依存関係として登録） |
+| [dev](plugins/dev) | 0.4.0 | `decompose` | GitHub の Issue や JIRA の課題を、1PR 程度のサブタスクに分け、承認を得てから作成する。課題の取得・作成・依存の登録は `tracker:issue` で、そのプロジェクトの運用ファイル（`TRACKER.md`）に沿って行う（GitHub ではサブ issue と blocked-by、JIRA ではサブタスクと課題のリンク）。文章で渡したときは分解案だけを出す |
 | | | `spec` | 作るものをユーザーと詰めて、承認済みの `SPEC.md` を書く |
 | | | `build` | 仕様をもとに新しい文脈のサブエージェントで実装し、チェック・仕様との照合・レビュー・修正を問題が無くなるまで繰り返す（最大3周）。仕様からずれる必要があるときだけ質問する。`--with <AI>` でレビューに別の AI を加える |
 | [design](plugins/design) | 0.1.0 | `service` | サービス全体の設計をユーザーと詰めて、設計文書（用語集・構想・要求仕様・基本設計・ロードマップ・判断記録）を書く。各リポジトリにある書き方の決まりを、プラグインの版にそろえる |
@@ -21,6 +21,8 @@ Claude Code と Codex 向けの個人用プラグインマーケットプレイ�
 | | | `triage` | レビューの指摘を調べてから、選んだ指摘だけを直す |
 | | | `loop` | 今の変更をレビューし、Must / Should の指摘とチェックの失敗を直すことを、直すものが無くなるまで（既定で最大3周、`--max-rounds`）繰り返す。仕様書は要らない。設計や公開 API を変える必要があるときだけ止まって聞く。コミットはしない |
 | | | `triage-pr` | PR のレビューコメントを直してコミット・push し、直したコミットを返信する |
+| [tracker](plugins/tracker) | 0.1.0 | `issue` | Jira（Atlassian MCP）・GitHub Issues（`gh`）のチケットを、言葉の頼み（「PROJ-12 をレビュー待ちにして」「自分の担当を出して」）どおりに、そのプロジェクトの運用で操作する。探す・見る・作る・子を作る・更新・状態を進める・コメント・依存を付ける・工数を記録する。書き込みは毎回確認を取ってから行い、ツールに無い操作は代えずに止まる |
+| | | `setup` | 運用ファイル `TRACKER.md` を、ツールから集めた情報（課題の種類・状態と遷移・必須項目・ラベル・テンプレート・直近の使われ方）で下書きし、分からない決まりを聞いて、確認を取ってから書く。既にあれば差分を見せて更新する |
 
 スキルは、Claude Code と Copilot CLI では `/<plugin>:<skill>`（例: `/review:review`）で呼び出します。
 Codex では `$` を入力して `<plugin>:<skill>` を選びます。
@@ -30,6 +32,16 @@ Codex では `$` を入力して `<plugin>:<skill>` を選びます。
 直した変更はマージコミットに含め、見つけた論理的なぶつかりと直した内容をそのメッセージに書きます。
 `dev:build` は、`review:review` が入っていればそれを使ってレビューします。
 `design:service` → `dev:decompose` → `dev:spec` → `dev:build` で、サービスの設計からコードまでを通して進められます。
+`dev:decompose` で課題を取得・作成するには `tracker` が要ります（文章で渡して分解案だけを出すなら要りません）。
+
+## プロジェクト管理ツールの運用（`tracker`）
+
+ツールの違い（Jira と GitHub の操作）は、プラグインの `plugins/tracker/skills/issue/references/<ツール>.md` が受け持ちます。
+ほかのツールは、同じ動詞の見出しを持つ参照ファイルを1つ足せば扱えます。
+プロジェクトの運用の違い（状態の流れ、課題の種類と必須項目、テンプレート、ラベル、工数）は、各プロジェクトの運用ファイルが受け持ちます。
+置き場所はリポジトリ直下の `TRACKER.md` で、無ければ個人の置き場所 `~/.config/ip-tracker/<host>/<owner>/<repo>.md` を読みます。
+書き方は `plugins/tracker/skills/setup/references/tracker-format.md` にあり、`/tracker:setup` で下書きできます。
+認証情報はファイルに書かず、Jira は Atlassian MCP の接続、GitHub は `gh` のログインを使います。
 
 ## 別の AI にもレビューさせる（`--with`）
 
@@ -74,6 +86,7 @@ Codex では `$` を入力して `<plugin>:<skill>` を選びます。
 /plugin install read@ip
 /plugin install review@ip
 /plugin install rules@ip
+/plugin install tracker@ip
 ```
 
 ### Codex
@@ -86,6 +99,7 @@ codex plugin add git-kit@ip
 codex plugin add read@ip
 codex plugin add review@ip
 codex plugin add rules@ip   # 入れた後、一度 /hooks を実行してフックを信頼する
+codex plugin add tracker@ip
 ```
 
 ### GitHub Copilot CLI
@@ -100,6 +114,7 @@ copilot plugin install git-kit@ip
 copilot plugin install read@ip
 copilot plugin install review@ip
 copilot plugin install rules@ip
+copilot plugin install tracker@ip
 ```
 
 ## 更新
@@ -119,6 +134,7 @@ claude plugin update git-kit@ip
 claude plugin update read@ip
 claude plugin update review@ip
 claude plugin update rules@ip
+claude plugin update tracker@ip
 ```
 
 ### Codex
@@ -156,6 +172,8 @@ python3 -m unittest discover -s tests -v
 リポジトリの整合性（マニフェストの JSON、2つのマニフェストと上の表のバージョン）と、
 `review:review` の SKILL.md にある別の AI のコマンドに、決めた権限のオプションと `IP_PEER=1` が入っていること、
 `git-kit:merge` の SKILL.md の frontmatter と長さ（指示の水準に留まっているか）、試しのマージのコマンド、コードブロックに push などの扱わないコマンドが無いことを確かめます。
+`tracker` は構造だけを確かめます（frontmatter と長さ、参照ファイルの動詞の見出し、運用ファイルの書き方の見出し、
+`dev:decompose` にツールごとの操作が無いこと、実在の値や認証情報を書かせる指示が無いこと）。
 
 ## プラグインの追加
 

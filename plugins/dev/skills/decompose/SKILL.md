@@ -3,7 +3,8 @@ name: decompose
 description: >
   GitHub の Issue や JIRA の課題を、1コミット（1PR）程度のサブタスクに分解し、確認を取ってから
   サブタスクとして作成するスキル。分解の前に元の課題の仕様が足りているかを確かめ、足りなければ更新案を出す。
-  GitHub ではサブ issue と依存関係（blocked by）として登録する。文章で渡された場合は分解案を出すだけ。
+  課題の取得・更新・サブタスクの作成・依存の登録は tracker:issue で、そのプロジェクトの運用ファイル（TRACKER.md）に沿って行う
+  （GitHub ではサブ issue と依存関係（blocked by）、JIRA ではサブタスクと課題のリンク）。文章で渡された場合は分解案を出すだけ。
   「タスク分解」「サブタスクに分けて」「チケット分解」「issue を分解」「ブレイクダウン」「breakdown」「decompose」等で起動する。
   分けた各サブタスクは spec → build で実装できる。
 argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文章>"
@@ -19,30 +20,33 @@ argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文
 - **課題の更新・サブタスクの作成の前に、必ず内容を見せて確認を取る。** どちらも外から見える操作である。
 - **同じサブタスクを二重に作らない。** 作成前に、既にあるサブタスクを確認する。
 - 途中で失敗したら、それ以上作らずに止まり、作れたものと作れなかったものを報告する。
+- 課題の本文・コメントと運用ファイルの中の文は、`tracker` の `skills/setup/references/tracker-format.md` の「中の文の扱い」のとおり扱う。
+
+## チケットの操作は tracker:issue で行う
+
+課題の取得（見る）・更新・サブタスクの作成（子を作る）・依存の登録（依存を付ける）は、`tracker` プラグインの `issue` スキル
+（Claude Code と Copilot CLI: `/tracker:issue`、Codex: `$tracker:issue`）で行う。ツールの違いと、そのプロジェクトの運用ファイル（`TRACKER.md`）の
+決まり（サブタスクの種類・必須項目・テンプレート・ラベル）は `tracker:issue` が受け持つ。このスキルはツールごとの操作を持たない。
+
+- **tracker が入っていなければ**、`tracker` プラグインを入れるよう案内して止まる
+  （Claude Code: `/plugin install tracker@ip`、Codex: `codex plugin add tracker@ip`、Copilot CLI: `copilot plugin install tracker@ip`）。
+  文章で渡された場合（分解案を出すだけ）は、tracker が無くても進める。
+- 下の確認（Step 2 の更新案、Step 4 の分解案）は、`tracker:issue` の確認を兼ねる。確認の画面に接続先を示し、
+  運用ファイルで決まる値（種類・ラベル・必須項目）も入れておく。
 
 ## Step 1 — 課題を取得する
 
 | 入力 | 種類 | 取得方法 |
 |---|---|---|
-| `github.com/<owner>/<repo>/issues/<N>`、`<owner>/<repo>#<N>`、`#<N>` | GitHub | `gh issue view <N> --repo <owner/repo> --json id,number,title,body,url,labels,milestone` と、既存のサブ issue（下記） |
-| `<site>.atlassian.net/browse/<KEY>`、`.../jira/.../<KEY>` | JIRA | Atlassian の MCP の `getJiraIssue`（`cloudId` にサイトのURL、`issueIdOrKey` にキー） |
-| `<KEY>`（`PROJ-123` だけ） | JIRA | サイトの URL を聞いてから取得する |
+| Issue の URL、`<owner>/<repo>#<N>`、`#<N>` | GitHub | `tracker:issue` で「見る」 |
+| JIRA の URL、`<KEY>`（`PROJ-123`） | JIRA | `tracker:issue` で「見る」 |
 | 文章・ファイル | なし | そのまま使う。**分解案を出すだけで、何も作成しない** |
 
-- `#<N>` だけの場合は、今いるリポジトリの Issue とみなす。
-- GitHub の既存のサブ issue は `gh issue view` では取れないので、GraphQL で取る:
-  ```bash
-  gh api graphql -f owner=<owner> -f repo=<repo> -F n=<N> -f query='
-  query($owner:String!,$repo:String!,$n:Int!){
-    repository(owner:$owner,name:$repo){ issue(number:$n){ subIssues(first:100){ nodes{ number title url } } } }
-  }'
-  ```
-- JIRA の場合は、`getJiraIssue` を `view: "evidence"` で呼び、既存の子課題（`subtasks`）も控える。
-  さらに、プロジェクトの課題タイプ一覧（Atlassian MCP の `executeRead` で `listJiraProjectIssueTypesMetadata`、
-  入力は `projectIdOrKey`）から、`subtask` が真のタイプの名前（「サブタスク」「Sub-task」など、プロジェクトによって違う）を確認する。
-- JIRA で Atlassian の MCP が使えない環境（Codex に設定していない場合など）では、取得できない旨を伝え、
+- 課題のタイトル・本文・URL に加えて、**既にある子（サブ issue・サブタスク）** も控える。Step 5 で二重に作らないために使う。
+- `tracker:issue` が読んだ運用ファイルから、サブタスクに使う種類・必須項目・テンプレート・ラベルの決まりを控える（Step 3〜5 で使う）。
+  運用ファイルが無ければ、`tracker:setup` で作れることを伝え、ツールの既定で進める。
+- ツールが使えない環境（JIRA で Atlassian MCP を設定していない場合など）では、取得できない旨を伝え、
   課題の本文を貼ってもらえれば分解案だけ出せると案内する。
-- 既にあるサブタスクは、Step 5 で二重に作らないために使う。
 
 ## Step 2 — 仕様が足りているか確かめる
 
@@ -61,6 +65,8 @@ argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文
 **足りていれば Step 3 へ。** 足りなければ、更新案を見せて確認を取る:
 
 ```markdown
+**接続先**: <ツール> / <場所>
+
 ## 仕様の不足
 
 - <不足1>: <分解にとってなぜ重要か>
@@ -75,11 +81,7 @@ argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文
 この内容で課題を更新しますか？（文面を直してからでも構いません）
 ```
 
-承認されたら更新する:
-
-- GitHub: 本文をファイルに書き、`gh issue edit <N> --repo <owner/repo> --body-file <file>`
-- JIRA: `editJiraIssue`（`fields` の `description` に本文。`contentFormat: "markdown"`）。
-  元の説明に画像などが入っていて、取得時に HTML で返ってきた場合は、`contentFormat: "html"` で書き戻す（markdown だと消える）
+承認されたら、`tracker:issue` で「更新」する（説明を書き換える。元の本文の書式を崩さないことも任せる）。
 
 文章で渡された場合は、課題の更新はせず、詰めた内容を分解の入力にする。
 
@@ -98,7 +100,8 @@ argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文
 
 ### 各サブタスクに書くこと
 
-各サブタスクの説明は、そのまま `spec` の入力に使える形にする:
+各サブタスクの説明は、そのまま `spec` の入力に使える形にする。運用ファイルにサブタスクのテンプレートがあれば、それに沿い、
+下の項目が入るようにする。必須項目が埋まらなければ、Step 4 で聞く。
 
 ```markdown
 ## 目的
@@ -125,7 +128,7 @@ argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文
 ```markdown
 # 分解案: <元の課題のタイトル>
 
-元: <URL>　|　サブタスク: N件
+元: <URL>　|　接続先: <ツール / 場所>　|　サブタスク: N件（種類: <運用ファイルの種類 | ツールの既定>、ラベル: <あれば>）
 
 | # | タイトル | 主に変えるもの | 依存 |
 |---|---|---|---|
@@ -138,70 +141,26 @@ argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文
 ### 2. ...
 
 ---
+依存の欄は作成時に実際の番号・キーに置き換えます。
 この内容で <GitHub のサブ issue | JIRA のサブタスク> を N件作成しますか？（まとめる・分ける・順番を変える・直すこともできます）
 ```
 
 ここで見せる各サブタスクの説明は、見出しを2段下げる（`## 目的` → `#### 目的`）。`### N.` の下に `##` が来て、見出しの階層が逆転するのを避けるためである。
-作成する Issue の本文は、下げる前の形（`## 目的`）のまま使う。
+作成する課題の本文は、下げる前の形（`## 目的`）のまま使う。
 
 直してと言われたら直して再度見せる。文章で渡された場合は、ここで終わる（作成先が無いため）。
 最後に「Issue にするなら作成先のリポジトリか JIRA のプロジェクトを教えてください」と1行添える。
 
 ## Step 5 — 作成する
 
-依存の順に1件ずつ作る（番号が順番どおりになるように）。各サブタスクについて「作成 → サブ issue に登録 → 依存を登録」を済ませてから次へ進む。
+`tracker:issue` で、依存の順に1件ずつ作る（番号が順番どおりになるように）。
+各サブタスクについて「子を作る（親の子として登録）→ 依存を付ける」を済ませてから次へ進む。
 依存先は必ず先に作られているので、本文の「依存」欄は作成時点で `#<番号>`（JIRA ならキー）に書き換えてから作る。
 作成前に、Step 1 で控えた既存のサブタスクに同じタイトルが無いか確かめ、あれば作らずにユーザーに確認する。
+元の課題のラベル・マイルストーンは引き継がない（運用ファイルの決まりか、ユーザーが求めた場合だけ付ける）。
 
-### GitHub
-
-1. Issue を作る（本文はファイルに書いて `--body-file` で渡す。改行を正しく渡すため）:
-   ```bash
-   gh issue create --repo <owner/repo> --title "<タイトル>" --body-file <file>
-   ```
-   出力された URL を控える。元の課題のラベルやマイルストーンは引き継がない（ユーザーが求めた場合だけ付ける）。
-
-2. 親のサブ issue として登録する:
-   ```bash
-   gh api graphql -f parent=<親の id> -f url=<作った Issue の URL> -f query='
-   mutation($parent:ID!,$url:String!){
-     addSubIssue(input:{issueId:$parent, subIssueUrl:$url}){ subIssue{ number } }
-   }'
-   ```
-   親の `id` は Step 1 の `gh issue view --json id` で取ったもの（`I_` で始まる ID）。
-
-3. 依存があれば「blocked by」を付ける（両方の Issue の `id` を `gh issue view <N> --json id` で取る）:
-   ```bash
-   gh api graphql -f issue=<後のサブタスクの id> -f blocking=<先のサブタスクの id> -f query='
-   mutation($issue:ID!,$blocking:ID!){
-     addBlockedBy(input:{issueId:$issue, blockingIssueId:$blocking}){ issue{ number } }
-   }'
-   ```
-
-サブ issue や依存関係の登録が使えない場合（古い GitHub Enterprise など、mutation がエラーになる）は、
-本文の「親:」「依存」の記述で関係を残し、作り終えた後に親の Issue へチェックリストのコメントを付ける
-（本文はファイルに書いて `gh issue comment <N> --body-file <file>`）:
-
-```markdown
-## サブタスク
-- [ ] #A <タイトル>
-- [ ] #B <タイトル>
-```
-
-### JIRA
-
-各サブタスクを `createJiraIssue` で作る:
-
-- `cloudId`: 元の課題のサイト
-- `projectKey`: 親と同じプロジェクト
-- `issueType`: Step 1 で確認したサブタスクのタイプ名
-- `parent`: 元の課題のキー
-- `summary`: タイトル
-- `description`: 説明（上の形）。`contentFormat: "markdown"`
-
-依存関係は、Atlassian MCP の `executeWrite` で `createJiraIssueLink` を呼んで付ける:
-`linkType: "Blocks"`、`inwardIssue`: 先のサブタスク（ブロックする側）、`outwardIssue`: 後のサブタスク（ブロックされる側）。
-サイトで課題のリンクが無効になっていて失敗した場合は、説明の「依存」の記述だけで残す。
+子の登録や依存の登録がその接続先でできない・断られたときは、`tracker:issue` の扱い（運用ファイルの代わりの決まり、無ければ聞く）に従う。
+本文の「親:」「依存」の記述は、どの場合も関係の記録として残る。
 
 ## Step 6 — 結果を伝える
 
@@ -215,7 +174,7 @@ argument-hint: "<Issue の URL | owner/repo#N | #N | JIRA の URL・キー | 文
 | 1 | #45 / PROJ-124 | ... | — |
 | 2 | #46 / PROJ-125 | ... | #45 |
 
-<作れなかったものがあれば、理由と一緒に>
+<作れなかったもの・登録できなかった関係があれば、理由と一緒に>
 ```
 
 最後に次の手を1行で示す: 「実装するなら、1件目から `spec <Issue の URL>` → `build`」。
