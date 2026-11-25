@@ -1,6 +1,6 @@
 {
   "name": "rules",
-  "version": "0.3.0",
-  "description": "Always-on working rules injected into every session and subagent (answer-only for questions, verify before concluding, no effort-driven compromises, recommended option first with compromises allowed only for concrete non-effort blockers and labeled with the reason)",
+  "version": "0.4.0",
+  "description": "Always-on working rules injected into every session and subagent (answer-only for questions, stay within the requested scope and list unrelated issues at the end instead of fixing them, verify before concluding, no effort-driven compromises, recommended option first with compromises allowed only for concrete non-effort blockers and labeled with the reason)",
   "author": { "name": "ShotaIuchi" }
 }
