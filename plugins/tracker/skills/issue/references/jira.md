@@ -1,7 +1,7 @@
 # Jira（Atlassian MCP）
 
 Jira の課題を Atlassian MCP のツールで操作する。ここにはツールの違いだけを書く。
-できない操作・断られた操作をどうするかは `issue` の SKILL.md に従う。
+できない操作・断られた操作をどうするかは `issue` の SKILL.md に従う。`tracker:view` も「探す」「見る」「ライブ」を使う。
 
 ## 共通
 
@@ -20,13 +20,17 @@ Jira の課題を Atlassian MCP のツールで操作する。ここにはツー
 ## 探す
 
 `searchJiraIssuesUsingJql`（`jql`、`maxResults`）。運用ファイルのプロジェクトに絞る（`project = <KEY>`）。
-例: 自分の担当は `assignee = currentUser() AND statusCategory != Done`、今のスプリントは `sprint in openSprints()`、言葉は `text ~ "<言葉>"`。
+例: 自分の担当は `assignee = currentUser() AND statusCategory != Done`（運用ファイルの状態の流れがあれば、その終わりの状態で絞る）、今のスプリントは `sprint in openSprints()`、言葉は `text ~ "<言葉>"`。
+1回で返るのは `maxResults`（既定50・上限100）件までである。全部を取るときは、応答にある次のページの印を次の呼び出しに渡し、`isLast` が真になるまで続きを取る（印の引数の名前はツールの定義で確かめる）。
+一覧の項目を決めて取るときは `view: "full"` と `fields`（`summary`、`status`、`assignee`、`issuetype`、`labels`、`updated`）を渡す。
+共通の項目（`tracker:view`）: キー ← `key`、タイトル ← `summary`、状態 ← `status`、担当 ← `assignee`、種類 ← `issuetype`、ラベル ← `labels`、更新日 ← `updated`、URL ← `key`（`https://<site>.atlassian.net/browse/<キー>`）。
 
 ## 見る
 
 `getJiraIssue`（`issueIdOrKey`、`view: "evidence"`）。子課題（`subtasks`）と課題のリンクも返る。
 エピックの下の課題は `subtasks` に入らないので、`searchJiraIssuesUsingJql` の `parent = <KEY>` で取る。
 コメントは `listJiraIssueComments`。編集の準備には `includeEditableFields: true` で、編集できる項目と選べる値を取る。
+共通の項目（`tracker:view`）: `view: "evidence"` で `key`・`summary`・`status`・`assignee`・`issuetype`・`labels`・`updated` も返る。当て方は「探す」と同じ。
 
 ## 作る
 
@@ -74,3 +78,13 @@ Jira の課題を Atlassian MCP のツールで操作する。ここにはツー
 - 種類ごとの必須項目: `executeRead` の `getJiraIssueTypeMetaWithFields`（プロジェクトと課題の種類ごと）
 - 直近の課題の使われ方: `searchJiraIssuesUsingJql`（`project = <KEY> ORDER BY updated DESC`、`view: "evidence"`）。
   ラベル・コンポーネント・優先度・見積もりの項目・作業ログの有無・説明の見出し
+
+## ライブ
+
+`tracker:view` のページ（`artifact-live`）が、見る人自身の接続で自動で取り直すときに使う。
+
+- **コネクタ**: claude.ai の Atlassian のコネクタ（ページの `mcp` 機能で宣言する `server` は、そのコネクタの表示名）。
+- **ツール**: 「探す」「見る」に当たる読み取りのツールだけを宣言する。一覧（とエピックの下の課題）は `searchJiraIssuesUsingJql`、
+  1件の本文・子課題は `getJiraIssue`、コメントは `listJiraIssueComments`。入力は「探す」「見る」と同じ。
+- **JQL**: ビューの条件のうち JQL に直せるものは JQL に入れ、「共通」の値の渡し方で組む。運用ファイルのプロジェクトへの絞り込み（`project = <KEY>`）を必ず付ける。
+- 引数の名前と結果の形は、そのセッションのツールの定義と、1回の実際の呼び出し（読み取り）で確かめる。

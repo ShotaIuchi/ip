@@ -38,7 +38,7 @@
     {
       "name": "tracker",
       "source": "./plugins/tracker",
-      "description": "Operate Jira and GitHub Issues the way each project runs them, from plain requests"
+      "description": "Operate and view Jira and GitHub Issues the way each project runs them, from plain requests"
     },
     {
       "name": "quick",

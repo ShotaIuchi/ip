@@ -1,7 +1,7 @@
 # GitHub Issues（gh）
 
 GitHub（github.com と GitHub Enterprise）の Issue を `gh` で操作する。ここにはツールの違いだけを書く。
-できない操作・断られた操作をどうするかは `issue` の SKILL.md に従う。
+できない操作・断られた操作をどうするかは `issue` の SKILL.md に従う。`tracker:view` も「探す」「見る」「ライブ」を使う。
 
 ## 共通
 
@@ -18,15 +18,18 @@ GitHub（github.com と GitHub Enterprise）の Issue を `gh` で操作する�
 ## 探す
 
 ```bash
-gh issue list --repo '<host>/<owner>/<repo>' --state <open | closed | all> --json number,title,url,labels,assignees,state --limit 50
+gh issue list --repo '<host>/<owner>/<repo>' --state <open | closed | all> --json number,title,url,labels,assignees,state,updatedAt --limit 50
 ```
 頼みに合わせて `--assignee @me`、`--label '<ラベル>'`、`--search '<言葉>'` を足す。
+返るのは `--limit` の件数までである。全部を取るときは、返った件数が `--limit` と同じなら `--limit` を上げて取り直す（`gh` が中で続きのページを取る）。
+共通の項目（`tracker:view`）: キー ← `number`、タイトル ← `title`、状態 ← `state`・`labels`、担当 ← `assignees`、種類 ← `labels`、ラベル ← `labels`、更新日 ← `updatedAt`、URL ← `url`。
 
 ## 見る
 
 ```bash
-gh issue view <N> --repo '<host>/<owner>/<repo>' --json id,number,title,body,url,state,stateReason,labels,assignees,milestone,comments
+gh issue view <N> --repo '<host>/<owner>/<repo>' --json id,number,title,body,url,state,stateReason,labels,assignees,milestone,comments,updatedAt
 ```
+共通の項目（`tracker:view`）: 当て方は「探す」と同じ（使う値は上の `--json` にある）。
 子と依存は GraphQL で取る。片方だけ無い GitHub もあるので、別々に問い合わせる。
 ```bash
 gh api graphql --hostname '<host>' -f owner='<owner>' -f repo='<repo>' -F n=<N> -f query='
@@ -98,3 +101,9 @@ mutation($issue:ID!,$blocking:ID!){ addBlockedBy(input:{issueId:$issue, blocking
 - 直近の Issue の使われ方: `gh issue list --repo '<host>/<owner>/<repo>' --state all --limit 50 --json number,title,labels,state,stateReason,body`
   （状態らしいラベル・種類らしいラベル・タイトルの付け方・本文の見出し）
 - Projects を使っていれば: `GH_HOST='<host>' gh project list --owner '<owner>' --format json` と `field-list`（状態のフィールド）
+
+## ライブ
+
+**なし。** ページ（`tracker:view` の `artifact-live`）から自動で取り直すのに使うコネクタのツールを用意していない。
+`artifact-live` でも、GitHub の分は取った時点の内容を埋め込む。使えるコネクタを用意したら、この見出しを `jira.md` の「ライブ」と同じ形
+（コネクタ・ツール・入力）に書き直せば、自動で取り直せる。
