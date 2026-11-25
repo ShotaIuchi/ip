@@ -1,0 +1,7 @@
+{
+  "name": "quick",
+  "version": "0.1.0",
+  "description": "Run light requests for one turn on the latest Sonnet at medium effort (hs) or the latest Haiku at low effort (hhs)",
+  "author": { "name": "ShotaIuchi" },
+  "skills": "./skills/"
+}

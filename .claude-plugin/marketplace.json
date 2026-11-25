@@ -39,6 +39,11 @@
       "name": "tracker",
       "source": "./plugins/tracker",
       "description": "Operate Jira and GitHub Issues the way each project runs them, from plain requests"
+    },
+    {
+      "name": "quick",
+      "source": "./plugins/quick",
+      "description": "Run light requests on a faster model for one turn (Sonnet or Haiku)"
     }
   ]
 }
