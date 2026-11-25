@@ -16,9 +16,10 @@ Claude Code と Codex 向けの個人用プラグインマーケットプレイ�
 | [read](plugins/read) | 0.1.0 | `diagram` | 1ページの設計資料（Mermaid の図4枚と、どこを見るかの表） |
 | | | `outline` | 流れだけを読むための骨組みビュー（シグネチャ・制御フロー・副作用だけを残す） |
 | [rules](plugins/rules) | 0.3.0 | —（hooks） | 常に守る作業ルール（`rules/*.md`）を、セッションとサブエージェントの開始時に差し込む。質問には回答だけを返す・断定の前に前提を確かめる・工数を理由に妥協しない・選択肢は推奨（工数度外視のベストプラクティス）を一番上に置く。工数以外の具体的な障害で採れないときだけ妥協案を「（推奨：妥協案）」として理由を添えて推奨にし、ベストプラクティスを2番目に置く。Codex では一度 `/hooks` でフックを信頼する |
-| [review](plugins/review) | 0.4.0 | `review` | 複数の観点でレビューし、チャットに報告する（Must / Should / Could）。正確性のチェックは組み込みのレビュー機能に任せる（Claude Code は `/code-review`、Codex は `$review-agent`、Copilot CLI は `code-review` エージェント）。`--with <AI>` で別の AI にも同じ対象をレビューさせ、1つのレポートにまとめる |
+| [review](plugins/review) | 0.5.0 | `review` | 複数の観点でレビューし、チャットに報告する（Must / Should / Could）。正確性のチェックは組み込みのレビュー機能に任せる（Claude Code は `/code-review`、Codex は `$review-agent`、Copilot CLI は `code-review` エージェント）。`--with <AI>` で別の AI にも同じ対象をレビューさせ、1つのレポートにまとめる |
 | | | `review-pr` | PR をレビューして該当行にコメントを投稿する。2回目以降は再レビューになる。`--approve` で承認まで進める |
 | | | `triage` | レビューの指摘を調べてから、選んだ指摘だけを直す |
+| | | `loop` | 今の変更をレビューし、Must / Should の指摘とチェックの失敗を直すことを、直すものが無くなるまで（既定で最大3周、`--max-rounds`）繰り返す。仕様書は要らない。設計や公開 API を変える必要があるときだけ止まって聞く。コミットはしない |
 | | | `triage-pr` | PR のレビューコメントを直してコミット・push し、直したコミットを返信する |
 
 スキルは、Claude Code と Copilot CLI では `/<plugin>:<skill>`（例: `/review:review`）で呼び出します。
