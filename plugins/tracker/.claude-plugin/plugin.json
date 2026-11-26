@@ -1,6 +1,6 @@
 {
   "name": "tracker",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Operate and view Jira and GitHub Issues the way each project runs them, from plain requests",
   "author": { "name": "ShotaIuchi" }
 }

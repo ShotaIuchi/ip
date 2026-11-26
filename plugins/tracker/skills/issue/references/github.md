@@ -104,6 +104,6 @@ mutation($issue:ID!,$blocking:ID!){ addBlockedBy(input:{issueId:$issue, blocking
 
 ## ライブ
 
-**なし。** ページ（`tracker:view` の `artifact-live`）から自動で取り直すのに使うコネクタのツールを用意していない。
-`artifact-live` でも、GitHub の分は取った時点の内容を埋め込む。使えるコネクタを用意したら、この見出しを `jira.md` の「ライブ」と同じ形
+**なし。** ページ（`tracker:view` のフォーマットの更新が `開いたとき`・`<N>秒`）から自動で取り直すのに使うコネクタのツールを用意していない。
+自動で取り直すページでも、GitHub の分は取った時点の内容を埋め込む。使えるコネクタを用意したら、この見出しを `jira.md` の「ライブ」と同じ形
 （コネクタ・ツール・入力）に書き直せば、自動で取り直せる。
