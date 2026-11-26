@@ -1,7 +1,9 @@
 """Structural checks on the tracker plugin and the dev:decompose move onto it (AC-1 … AC-9),
 on importing the operating rules from outside documents (docs/specs/2026-11-25-tracker-sources.md, "sources AC-1 … AC-7"),
 on viewing tickets in a common shape (docs/specs/2026-11-25-tracker-view.md, "view AC-1 … AC-9"),
-and on choosing how a view is shown with display formats (docs/specs/2026-11-26-tracker-view-formats.md, "formats AC-1 … AC-9").
+on choosing how a view is shown with display formats (docs/specs/2026-11-26-tracker-view-formats.md, "formats AC-1 … AC-9"),
+and on building artifact pages from HTML templates and two shared scripts (docs/specs/2026-11-26-tracker-view-templates.md,
+"templates AC-1 … AC-9").
 
 SKILL.md and the reference files are instructions for an AI, so these tests cannot run the skills, and they do not pin
 the wording of the instructions. They confirm the manifests and versions, the frontmatter and the length limits, that
@@ -13,7 +15,11 @@ they confirm the view format's items, common fields, output kinds and reading or
 with those items, that each tool reference says how (or whether) a page can refetch it, and that the view skill names
 the rules it must keep. For the formats, they confirm the format items, groups, kinds and update values, that the built-in
 formats are written with those items, that views no longer carry how they are shown, and that the view skill chooses a
-format from a list, can create one, and records pages per view and format.
+format from a list, can create one, and records pages per view and format. For the templates, they read render.js, runtime.js
+and the HTML templates as text (no JavaScript is run): neither script puts values into HTML, together they use the agreed mcp
+calls and the https check, every template carries the marks its type needs and no script other than the marker JSON and the
+two scripts, the
+built-in formats point at templates that exist, and the view skill copies a template and writes only the marker JSON.
 """
 
 from __future__ import annotations
@@ -41,6 +47,13 @@ VIEW_FORMAT = VIEW_DIR / "references" / "view-format.md"
 DEFAULT_VIEWS = VIEW_DIR / "references" / "default-views.md"
 DISPLAY_FORMAT = VIEW_DIR / "references" / "display-format.md"
 DEFAULT_FORMATS = VIEW_DIR / "references" / "default-formats.md"
+TEMPLATES = VIEW_DIR / "templates"
+RUNTIME = TEMPLATES / "runtime.js"
+RENDER = TEMPLATES / "render.js"
+SCRIPTS = [RENDER, RUNTIME]  # loaded in this order: render.js draws, runtime.js refetches and keeps the state
+TEMPLATE_KINDS = {"表": TEMPLATES / "table.html", "カンバン": TEMPLATES / "kanban.html", "詳細": TEMPLATES / "detail.html"}
+TEMPLATE_FILES = [*SCRIPTS, *TEMPLATE_KINDS.values()]
+PERSONAL_TEMPLATES = "~/.config/ip-tracker/templates/"
 VIEW_DOCS = [VIEW, VIEW_FORMAT, DEFAULT_VIEWS, DISPLAY_FORMAT, DEFAULT_FORMATS]
 ALL_DOCS = [ISSUE, SETUP, *TOOL_REFERENCES, FORMAT, SOURCES, DECOMPOSE, *VIEW_DOCS]
 
@@ -48,13 +61,14 @@ VERBS = ("探す", "見る", "作る", "子を作る", "更新", "状態を進�
 FORMAT_HEADINGS = ("接続先", "状態の流れ", "課題の種類と必須項目", "テンプレート", "ラベルと命名", "工数", "代わりの決まり", "その他")
 LINE_LIMITS = {ISSUE: 150, SETUP: 150, FORMAT: 115, SOURCES: 100, DECOMPOSE: 221,
                ISSUE_DIR / "references" / "jira.md": 110, ISSUE_DIR / "references" / "github.md": 110,
-               VIEW: 170, VIEW_FORMAT: 100, DEFAULT_VIEWS: 100, DISPLAY_FORMAT: 100, DEFAULT_FORMATS: 100}
+               VIEW: 170, VIEW_FORMAT: 100, DEFAULT_VIEWS: 100, DISPLAY_FORMAT: 120, DEFAULT_FORMATS: 100,
+               RUNTIME: 700, RENDER: 450, **{path: 150 for path in TEMPLATE_KINDS.values()}}
 SOURCE_KINDS = ("Google Docs", "Gist", "GitHub のファイル", "Confluence", "URL")
 SOURCE_PARTS = ("場所の書き方", "読み方", "版の印", "届かないとき")
 SOURCE_COLUMNS = ("種類", "場所", "版の印", "受け持った見出し", "取り込んだ日")
 VIEW_ITEMS = ("名前", "対象", "条件", "列", "並び")
 OLD_VIEW_ITEMS = ("出し方", "まとめ方", "取り直す間隔")  # moved to the formats; an error in a view now
-FORMAT_ITEMS = ("名前", "群", "型", "まとめ方", "更新")
+FORMAT_ITEMS = ("名前", "群", "型", "まとめ方", "更新", "テンプレート")
 GROUPS = {"コンソール": ("表", "簡易一覧", "詳細"), "アーティファクト": ("表", "カンバン", "詳細")}
 UPDATES = ("しない", "開いたとき", "<N>秒")
 GROUPED_KINDS = ("表", "簡易一覧")  # the kinds that take まとめ方
@@ -133,7 +147,7 @@ class ManifestTest(unittest.TestCase):
             with self.subTest(kind=kind):
                 manifest = load(TRACKER / kind / "plugin.json")
                 self.assertEqual(manifest["name"], "tracker")
-                self.assertEqual(manifest["version"], "0.4.0")
+                self.assertEqual(manifest["version"], "0.5.0")
         sources = {e["name"]: e["source"] for e in load(ROOT / ".claude-plugin" / "marketplace.json")["plugins"]}
         self.assertEqual(sources.get("tracker"), "./plugins/tracker")
 
@@ -143,7 +157,7 @@ class ManifestTest(unittest.TestCase):
                 self.assertEqual(load(DEV / kind / "plugin.json")["version"], "0.4.0")
         readme = read(ROOT / "README.md")
         self.assertRegex(readme, r"(?m)^\| \[dev\]\(plugins/dev\) \| 0\.4\.0 \|")
-        self.assertRegex(readme, r"(?m)^\| \[tracker\]\(plugins/tracker\) \| 0\.4\.0 \|")
+        self.assertRegex(readme, r"(?m)^\| \[tracker\]\(plugins/tracker\) \| 0\.5\.0 \|")
         for line in ("/plugin install tracker@ip", "codex plugin add tracker@ip", "copilot plugin install tracker@ip",
                      "claude plugin update tracker@ip"):
             with self.subTest(line=line):
@@ -195,7 +209,7 @@ class ReferenceTest(unittest.TestCase):
             r"|github\.com/(?!<)[\w.-]+"              # a real GitHub owner
             r"|\b[A-Z][A-Z0-9]+-\d+\b"                 # a real issue key
         )
-        for path in [*TOOL_REFERENCES, FORMAT, SOURCES, *VIEW_DOCS]:  # view AC-8 for the view documents
+        for path in [*TOOL_REFERENCES, FORMAT, SOURCES, *VIEW_DOCS, *TEMPLATE_FILES]:  # view AC-8, templates AC-8
             for number, line in enumerate(read(path).splitlines(), 1):
                 with self.subTest(path=relative(path), line=number):
                     self.assertIsNone(real_value.search(line.replace("<site>.atlassian.net", "")), line)
@@ -222,11 +236,11 @@ class DecomposeTest(unittest.TestCase):
 
 
 class CredentialTest(unittest.TestCase):
-    def test_no_instruction_to_write_credentials(self):  # AC-9, sources AC-6, view AC-8
+    def test_no_instruction_to_write_credentials(self):  # AC-9, sources AC-6, view AC-8, templates AC-8
         credential = re.compile(r"トークン|API ?キー|パスワード|認証情報|資格情報|クッキー|token|api[_ ]?key|password|secret"
                                 r"|credential|cookie", re.I)
         refusal = re.compile(r"書かない|書かせない")
-        for path in ALL_DOCS:
+        for path in [*ALL_DOCS, *TEMPLATE_FILES]:
             for number, line in enumerate(read(path).splitlines(), 1):
                 if credential.search(line):
                     with self.subTest(path=relative(path), line=number):
@@ -437,6 +451,11 @@ def assert_format(case: unittest.TestCase, body: str) -> None:
     if "まとめ方" in items:
         case.assertIn(kind, GROUPED_KINDS, "まとめ方 on a kind that does not take it")
         case.assertIn(items["まとめ方"], ("なし", *COMMON_FIELDS))
+    if "テンプレート" in items:  # templates AC-4: a built-in template of the same kind, or a personal one
+        case.assertEqual(items["群"], "アーティファクト", "テンプレート outside the artifact group")
+        template = items["テンプレート"]
+        if not template.startswith(PERSONAL_TEMPLATES):
+            case.assertEqual(VIEW_DIR / template, TEMPLATE_KINDS[kind], template)
     if "更新" in items:
         case.assertEqual(items["群"], "アーティファクト", "更新 outside the artifact group")
         update = items["更新"]
@@ -730,13 +749,15 @@ class ViewSkillTest(unittest.TestCase):
         for value in UPDATES:
             with self.subTest(value=value):
                 self.assertIn(f"`{value}`", output)
-        self.assertIn("refetchInterval", output)
         self.assertIn('"<ビューの名前>/<フォーマットの名前>"', output)
         self.assertRegex(output, r"`format`（フォーマットの名前）")
         self.assertIn('id="ip-tracker-view"', output)
-        self.assertIn("`\\u003c`", output)  # the kept safety rules: escape `<` in the marker JSON, refetch with watchTool / invalidate
-        self.assertIn("watchTool", output)
-        self.assertIn("invalidate", output)
+        self.assertIn("`\\u003c`", output)  # the kept safety rule: escape `<` in the marker JSON
+        runtime = scripts_code()  # templates: how a page refetches lives in the scripts, not in the skill
+        for word in ("watchTool", "invalidate", "refetchInterval"):
+            with self.subTest(word=word):
+                self.assertIn(word, runtime)
+                self.assertNotIn(word, output)
         self.assertIn("公開の確認", output)  # the kept rules: confirm before publishing, the creator's snapshot and @自分
         self.assertGreaterEqual(output.count("@自分"), 2)
         self.assertIn("取れた件数", output)
@@ -758,6 +779,314 @@ class FormatFileTest(unittest.TestCase):
         for word in ("フォーマット", "群", "リスト", "`新規作成`"):
             with self.subTest(word=word):
                 self.assertIn(word, row)
+
+
+def required_marks() -> dict[str, list[str]]:
+    """display-format.md 「テンプレート」: the marks every type needs (the 「印」 bullet) plus each type's row of the table."""
+    body = sections(read(DISPLAY_FORMAT), "##")["テンプレート"]
+    common = re.search(r"(?m)^- \*\*印\*\*.*?どの型にも(.+?)が要る", body)
+    if common is None:
+        raise AssertionError("「テンプレート」 does not name the marks every type needs")
+    marks = re.findall(r"`([a-z-]+)`", common.group(1))
+    kinds = {}
+    for row in body.splitlines():
+        cells = [c.strip() for c in row.split("|")[1:-1]]
+        if len(cells) == 2 and cells[0] in TEMPLATE_KINDS:
+            kinds[cells[0]] = marks + re.findall(r"`([a-z-]+)`", cells[1])
+    return kinds
+
+
+def scripts(html: str) -> list[str]:
+    """The opening tags of every <script> in a template."""
+    return re.findall(r"<script\b[^>]*>", html, re.I)
+
+
+def js_code(text: str) -> str:
+    r"""A script with its comments removed, so that a check matches code and not a comment that names it.
+    Strings and regular expression literals are kept as they are (`/^https:\/\//` holds `//`)."""
+    out, i, last = [], 0, ""
+    while i < len(text):
+        c = text[i]
+        if text.startswith("//", i) or text.startswith("/*", i):
+            end = text.find("\n" if text[i + 1] == "/" else "*/", i + 2)
+            end = len(text) if end < 0 else end + (0 if text[i + 1] == "/" else 2)
+            out.append(" ")
+            i = end
+            continue
+        if c in "\"'`" or c == "/" and (last == "" or last in "(,=:[!&|?{};+"):
+            j, in_class = i + 1, False
+            while j < len(text) and (text[j] != c or in_class):
+                if text[j] == "\\":
+                    j += 1
+                elif c == "/" and text[j] in "[]":
+                    in_class = text[j] == "["
+                j += 1
+            out.append(text[i:j + 1])
+            last, i = c, j + 1
+            continue
+        out.append(c)
+        if not c.isspace():
+            last = c
+        i += 1
+    return "".join(out)
+
+
+def scripts_code() -> str:
+    """render.js and runtime.js together, without comments: a rule may live in either of the two scripts."""
+    return "\n".join(js_code(read(path)) for path in SCRIPTS)
+
+
+def function_body(code: str, name: str) -> str:
+    """The text of `function <name>(…) { … }` in comment-free code, up to its matching brace."""
+    match = re.search(rf"function\s+{name}\s*\([^)]*\)\s*\{{", code)
+    assert match, f"no function {name}"
+    depth, i = 1, match.end()
+    while depth:
+        depth += {"{": 1, "}": -1}.get(code[i], 0)
+        i += 1
+    return code[match.end():i - 1]
+
+
+def marker_example() -> dict:
+    """The marker JSON example in display-format.md 「テンプレート」."""
+    body = sections(read(DISPLAY_FORMAT), "##")["テンプレート"]
+    return json.loads(re.search(r"```json\n(.*?)```", body, re.S).group(1))
+
+
+def json_keys(value) -> set[str]:
+    if isinstance(value, dict):
+        return set(value) | {k for v in value.values() for k in json_keys(v)}
+    if isinstance(value, list):
+        return {k for v in value for k in json_keys(v)}
+    return set()
+
+
+class TemplateTest(unittest.TestCase):
+    def test_version_and_readme(self):  # templates AC-1
+        row = next(line for line in read(ROOT / "README.md").splitlines() if line.startswith("| | | `view` |"))
+        self.assertIn("テンプレート", row)
+        self.assertIn("runtime.js", row)
+        self.assertIn("render.js", row)
+
+    def test_runtime_keeps_values_out_of_html(self):  # templates AC-2: in neither of the two scripts
+        for path in SCRIPTS:
+            code = read(path)
+            for sink in ("innerHTML", "outerHTML", "insertAdjacentHTML", "document.write", "eval(", "new Function"):
+                with self.subTest(script=path.name, sink=sink):
+                    self.assertNotIn(sink, code)
+            self.assertNotRegex(code, r"\.html\s*\(", "no HTML setters of any library")
+            for sink in (r"setAttribute\(\s*[\"'](?:href|src|srcdoc|on)", r"\.src\s*=", r"srcdoc", r"createContextualFragment",
+                         r"DOMParser"):
+                with self.subTest(script=path.name, sink=sink):
+                    self.assertNotRegex(code, sink)
+        self.assertIn("textContent", scripts_code())
+
+    def test_runtime_links_only_https(self):  # templates AC-2
+        code = scripts_code()
+        param = re.search(r"function\s+safeUrl\s*\(\s*(\w+)\s*\)", code)
+        self.assertIsNotNone(param, "no safeUrl")
+        check = function_body(code, "safeUrl")
+        self.assertRegex(check, rf"/\^https:\\/\\//i?\.test\(\s*{param.group(1)}\s*\)", "safeUrl tests the value against https://")
+        self.assertRegex(check, r"\?\s*\w+\s*:\s*null", "anything else is no link")
+        # every write to an href (property, bracket or setAttribute) takes a name that holds only safeUrl's result
+        self.assertNotRegex(code, r"\[\s*[\"']href[\"']\s*\]|setAttribute(?:NS)?\s*\([^)]*[\"']href", "href is set only as a property")
+        hrefs = re.findall(r"\.href\s*=(?!=)\s*([^;\n]+)", code)
+        self.assertTrue(hrefs)
+        for value in hrefs:
+            with self.subTest(href=value):
+                self.assertRegex(value.strip(), r"^\w+$", "an href is assigned a plain name")
+                assigned = re.findall(rf"(?<![.\w]){value.strip()}\s*=(?!=)\s*([^;\n]+)", code)  # the name itself, not a.href
+                self.assertTrue(assigned)
+                for source in assigned:
+                    self.assertRegex(source.strip(), r"^safeUrl\(", "every link goes through safeUrl")
+        self.assertRegex(code, r"\.rel\s*=\s*[\"']noopener noreferrer[\"']")
+
+    def test_filters_take_any_of_the_values(self):  # display-format.md: `value` が配列ならどれか, for every comparison
+        body = function_body(js_code(read(RENDER)), "passes")
+        self.assertRegex(body, r"wanted\s*=\s*\[\]\.concat\(\s*filter\.value\s*\)")
+        self.assertNotRegex(body, r"timeOf\(\s*filter\.value")  # a date compared with the array itself is never true
+        for op in (">=", "<="):
+            branch = re.search(rf'filter\.op\s*===\s*"{op}"(.*?);', body, re.S)
+            self.assertTrue(branch, op)
+            self.assertRegex(branch.group(1), r"wanted\.some\(", op)
+
+    def test_runtime_uses_the_mcp_capability(self):  # templates AC-2, decided: the mcp type definitions
+        code = scripts_code()
+        self.assertRegex(code, r"claude\.use\(\s*[\"']mcp[\"']\s*\)")
+        self.assertRegex(code, r"mcp\s*=\s*namespace\s*\|\|\s*null")  # use("mcp") may resolve null: design for absence
+        self.assertRegex(code, r"mcp\.watchTool\(\s*\w[\w.]*\s*,\s*\w[\w.]*\s*,\s*\w[\w.]*\s*,\s*function")
+        self.assertRegex(code, r"refetchInterval\s*:\s*(?:view\.)?seconds\(\s*spec\.update\s*\)\s*\*\s*1000\b")
+        self.assertRegex(code, r"mcp\.invalidate\(")
+        self.assertRegex(code, r"mcp\.callTool\(")  # the next pages, not more watches
+        self.assertEqual(len(re.findall(r"mcp\s*\.\s*watchTool\s*\(", code)), 1, "one watch per tracker; the next pages come from callTool")
+        self.assertRegex(code, r"cache\.storedAt")
+        for code_name in ("needs_reauth", "server_not_connected", "not_in_manifest", "server_unavailable", "user_changed"):
+            with self.subTest(code=code_name):
+                self.assertIn(f'"{code_name}"', code)
+
+    def test_runtime_follows_the_error_rules(self):  # decided: 誤りのときの内容, 承認が要る呼び出し, 続きのページと1件ずつの呼び出し
+        code = js_code(read(RUNTIME))
+        denials = set(re.findall(r'"([a-z_]+)"', re.search(r"var\s+DENIALS\s*=\s*\[(.+?)\];", code, re.S).group(1)))
+        for code_name in ("needs_reauth", "server_not_connected", "blocked_by_policy", "consent_required", "not_in_manifest"):
+            with self.subTest(denial=code_name):
+                self.assertIn(code_name, denials)
+        self.assertNotIn("approval_required", denials, "approval_required is its own kind: it retracts but keeps the button")
+        self.assertNotIn("user_changed", denials)
+        kind = function_body(code, "kindOf")  # one function sorts the error codes for every path
+        for code_name in ('"user_changed"', '"approval_required"', "DENIALS"):
+            with self.subTest(kind=code_name):
+                self.assertIn(code_name, kind)
+        self.assertRegex(kind, r"if\s*\(\s*code\s*===\s*\"approval_required\"\s*\)\s*return\s+\"approve\"\s*;")
+        retracts = set(re.findall(r'"([a-z]+)"', re.search(r"var\s+RETRACTS\s*=\s*\[(.+?)\];", code).group(1)))
+        self.assertEqual(retracts, {"deny", "approve"}, "a watch's approval_required retracts like a denial (mcp.d.ts)")
+        # the 「承認して取る」 button: runtime.js hands a snapshot an action that calls approve, render.js puts it in failures
+        self.assertRegex(function_body(code, "snapshot"), r"action\s*:\s*\w+\s*\?\s*function\s*\(\s*\)\s*\{\s*approve\(\s*index\s*\)")
+        self.assertRegex(function_body(code, "approve"), r"\brun\(\s*index\s*,\s*null\s*,\s*true\s*\)", "the button calls the tools itself")
+        live = function_body(js_code(read(RENDER)), "collectLive")
+        self.assertRegex(live, r"label\s*:\s*\"承認して取る\"\s*,\s*action\s*:\s*view\.action")
+        self.assertRegex(function_body(js_code(read(RENDER)), "lines"), r"addEventListener\(\s*\"click\"\s*,\s*entry\.action\s*\)")
+        self.assertRegex(code, r"var\s+EACH_LIMIT\s*=\s*4\s*;")
+
+    def test_runtime_reads_the_marker_shape(self):  # templates: the scripts and display-format.md use the same shape
+        code = scripts_code()
+        keys = {key for key in json_keys(marker_example()) if re.fullmatch(r"[A-Za-z]+", key)} - set(COMMON_FIELDS)
+        # repo / view / format are the page's mark for the skill's overwrite check; issueIdOrKey and key are the tool's names
+        for key in sorted(keys - {"repo", "view", "format", "issueIdOrKey", "key"}):
+            with self.subTest(key=key):
+                self.assertRegex(code, rf"\.{key}\b|\b{key}:")
+        self.assertIn('getElementById("ip-tracker-view")', code)
+
+    def test_runtime_marks_match_the_documented_marks(self):  # templates AC-3, AC-4: one list of marks
+        code = js_code(read(RENDER))
+        common = re.findall(r'"([a-z-]+)"', re.search(r"COMMON_MARKS\s*=\s*\[(.+?)\]", code).group(1))
+        kinds = re.search(r"var\s+KINDS\s*=\s*\{(.+?)\n\s*\};", code, re.S).group(1)
+        runtime = {kind: common + re.findall(r'"([a-z-]+)"', marks)
+                   for kind, marks in re.findall(r'"(表|カンバン|詳細)": \[(.+?)\]', kinds, re.S)}
+        self.assertEqual(runtime, required_marks())
+        prototypes = set(re.findall(r'"([a-z-]+)"', re.search(r"var\s+PROTOTYPES\s*=\s*\[(.+?)\]", code).group(1)))
+        documented = set(re.findall(r"`([a-z-]+)`（雛形）", sections(read(DISPLAY_FORMAT), "##")["テンプレート"]))
+        self.assertEqual(prototypes, documented, "render.js and display-format.md name the same prototypes")
+
+    def test_templates_carry_their_marks(self):  # templates AC-3
+        marks = required_marks()
+        self.assertEqual(set(marks), set(TEMPLATE_KINDS))
+        for kind, path in TEMPLATE_KINDS.items():
+            html = read(path)
+            present = set(re.findall(r'data-ipt="([a-z-]+)"', html))
+            for name in marks[kind]:
+                with self.subTest(template=path.name, mark=name):
+                    self.assertIn(name, present)
+
+    def test_template_prototypes_are_templates(self):  # templates AC-3: the 「雛形」 marks are <template>, the rest inside one
+        body = sections(read(DISPLAY_FORMAT), "##")["テンプレート"]
+        prototypes = set(re.findall(r"`([a-z-]+)`（雛形）", body))
+        self.assertTrue(prototypes)
+        marks = required_marks()
+        page_marks = set.intersection(*(set(m) for m in marks.values()))  # the marks every type needs sit on the page itself
+        for kind, path in TEMPLATE_KINDS.items():
+            html = read(path)
+            inside = " ".join(re.findall(r"<template\b[^>]*>(.*?)</template>", html, re.S))
+            for name in marks[kind]:
+                with self.subTest(template=path.name, mark=name):
+                    if name in prototypes:
+                        self.assertIn(f'<template data-ipt="{name}">', html)
+                    elif name not in page_marks:
+                        self.assertIn(f'data-ipt="{name}"', inside)
+
+    def test_templates_mark_only_safe_elements(self):  # templates: a value written as text never runs, loads or nests
+        code = js_code(read(RENDER))
+        unmarkable = set(re.findall(r'"([A-Z]+)"', re.search(r"var\s+UNMARKABLE\s*=\s*\[(.+?)\]", code).group(1)))
+        self.assertLessEqual({"SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "LINK", "META", "BASE", "TEMPLATE"}, unmarkable)
+        checks = function_body(code, "markProblems")
+        self.assertIn(".content", checks, "the prototypes' contents are checked too")
+        self.assertRegex(checks, r"namespaceURI\s*===?\s*HTML_NS", "no mark outside HTML (SVG <script> and the like)")
+        self.assertIn("markProblems()", function_body(code, "problems"))
+        body = sections(read(DISPLAY_FORMAT), "##")
+        self.assertIn("入れ子にしない", body["テンプレート"])
+        self.assertIn("`<style>`", body["テンプレート"])
+        self.assertIn("付けてはいけない要素の印", body["誤りがあるとき"])
+        self.assertIn("入れ子の雛形", body["誤りがあるとき"])
+        for path in TEMPLATE_KINDS.values():
+            html = read(path)
+            with self.subTest(template=path.name):
+                for tag, name in re.findall(r'<([a-zA-Z][\w-]*)\b[^>]*\bdata-ipt="([a-z-]+)"', html):
+                    self.assertNotIn(tag.upper(), unmarkable - {"TEMPLATE"}, name)
+                    if tag.lower() == "template":
+                        self.assertIn(name, set(re.findall(r"`([a-z-]+)`（雛形）", body["テンプレート"])))
+                for inside in re.findall(r"<template\b[^>]*>(.*?)</template>", html, re.S):
+                    self.assertNotRegex(inside, r"(?i)<template\b", "no nested prototypes")
+                self.assertNotRegex(html, r"(?i)<svg\b|<math\b")
+
+    def test_templates_have_only_the_allowed_scripts(self):  # templates AC-3
+        allowed = ['<script type="application/json" id="ip-tracker-view">', '<script src="render.js">', '<script src="runtime.js">']
+        for path in TEMPLATE_KINDS.values():
+            html = read(path)
+            with self.subTest(template=path.name):
+                self.assertEqual(scripts(html), allowed)
+                self.assertNotRegex(html, r"(?i)\son[a-z]+\s*=", "no on…= attribute")
+                self.assertNotRegex(html, r"(?i)<link\b|@import|(?:src|href)=\"(?:https?:)?//|url\(", "no outside file")
+                self.assertNotRegex(html, r"(?i)<title\b", "the title comes from the marker JSON")
+
+    def test_templates_follow_the_page_rules(self):  # decided: light and dark, narrow widths (artifact-design)
+        for path in TEMPLATE_KINDS.values():
+            html = read(path)
+            with self.subTest(template=path.name):
+                self.assertIn("@media (prefers-color-scheme: dark)", html)
+                self.assertIn(':root:not([data-theme="light"])', html)
+                self.assertIn(':root[data-theme="dark"]', html)
+                self.assertIn("padding-left: max(16px, env(safe-area-inset-left, 0px))", html)
+                self.assertIn("padding-right: max(16px, env(safe-area-inset-right, 0px))", html)
+                self.assertRegex(html, r"body \{[^}]*background: var\(")
+                self.assertIn('id="ipt-refresh" data-ipt="refresh" hidden', html)  # shown by the runtime only when it refetches
+
+    def test_display_format_describes_templates(self):  # templates AC-4
+        heads = sections(read(DISPLAY_FORMAT), "##")
+        item = next(line for line in heads["フォーマットの項目"].splitlines() if line.startswith("| テンプレート |"))
+        self.assertIn("`templates/<型>.html`", item)
+        body = heads["テンプレート"]
+        self.assertIn(PERSONAL_TEMPLATES, body)
+        self.assertIn("だけを指せる", body)
+        for name in TEMPLATE_KINDS.values():
+            with self.subTest(template=name.name):
+                self.assertIn(f"`templates/{name.name}`", body)
+        self.assertIn('<script type="application/json" id="ip-tracker-view">', body)
+        self.assertIn("`on…=`", body)
+        example = marker_example()
+        for key in ("repo", "view", "format", "title", "kind", "update", "fetchedAt", "fetchedBy", "columns", "groupBy",
+                    "sort", "filters", "failures", "trackers"):
+            with self.subTest(key=key):
+                self.assertIn(key, example)
+        self.assertTrue(any("rows" in t for t in example["trackers"]) and any("live" in t for t in example["trackers"]))
+        errors = heads["誤りがあるとき"]
+        for word in ("テンプレート", "印", "`<script>`", "ファイルが無い", "運用ファイルの `## フォーマット` でのテンプレート"):
+            with self.subTest(error=word):
+                self.assertIn(word, errors)
+
+    def test_default_formats_use_templates_and_samples(self):  # templates AC-5
+        for name, body in ordered_sections(read(DEFAULT_FORMATS)):
+            items = view_items(body)
+            with self.subTest(format=name, group=items["群"]):
+                if items["群"] == "アーティファクト":
+                    self.assertIn("テンプレート", items)
+                    self.assertTrue((VIEW_DIR / items["テンプレート"]).is_file())
+                else:
+                    self.assertRegex(body, r"(?s)```markdown\n.+?```", "no output sample")
+
+    def test_view_skill_copies_a_template(self):  # templates AC-6
+        output = steps_of(read(VIEW))["出す"]
+        for word in ("テンプレートを写す", "templates/render.js", "templates/runtime.js", "中身だけ", "ほかは変えない", "`\\u003c`", "公開の確認",
+                     ARTIFACT_RECORD, "公開し直す", "非公開", "`title`", "`mcp`"):
+            with self.subTest(word=word):
+                self.assertIn(word, output)
+        self.assertIn("自分では書かない", output)
+        self.assertNotIn("storedAt", output, "the refetch details live in the scripts")
+
+    def test_creating_a_format_can_copy_a_template(self):  # templates AC-7
+        create = steps_of(read(VIEW))["フォーマットを選ぶ"].split("\n4. ", 1)[1]
+        for word in ("見た目", "`templates/<型>.html`", PERSONAL_TEMPLATES, "`テンプレート`", "下書き", "確認"):
+            with self.subTest(word=word):
+                self.assertIn(word, create)
+        self.assertIn(PERSONAL_TEMPLATES, sections(read(VIEW), "##")["守ること"])
 
 
 if __name__ == "__main__":
